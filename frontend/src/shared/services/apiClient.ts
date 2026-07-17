@@ -1,0 +1,75 @@
+import axios from 'axios';
+
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1',
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+let isRefreshing = false;
+interface QueueItem {
+  resolve: (value: unknown) => void;
+  reject: (error: unknown) => void;
+}
+let failedQueue: QueueItem[] = [];
+
+const processQueue = (error: unknown, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (token) {
+      prom.resolve(token);
+    } else {
+      prom.reject(error);
+    }
+  });
+
+  failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Prevent infinite loops if refresh token endpoint fails
+    if (originalRequest.url?.includes('/auth/refresh')) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => {
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        await apiClient.post('/auth/refresh');
+        isRefreshing = false;
+        processQueue(null, 'refreshed');
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        isRefreshing = false;
+        processQueue(refreshError, null);
+
+        // Trigger a global custom event so the Redux auth slice can reset state
+        window.dispatchEvent(new CustomEvent('auth-logout'));
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;
