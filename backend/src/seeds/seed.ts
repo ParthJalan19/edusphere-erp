@@ -139,7 +139,7 @@ const seedDB = async () => {
     await Timetable.deleteMany({});
     await Notification.deleteMany({});
 
-    const defaultPassword = 'Password123';
+    const defaultPassword = 'EduSpherePass2026#';
 
     // 2. Seed Academic Year & Semesters
     console.log('Seeding Academic Years & Semesters... 📅');
@@ -629,7 +629,7 @@ const seedDB = async () => {
 
     console.log('Database seeded successfully! 🌱');
     console.log('\n==================================================');
-    console.log('DEMO LOGINS (Password: Password123 for all accounts):');
+    console.log('DEMO LOGINS (Password: EduSpherePass2026# for all accounts):');
     console.log('--------------------------------------------------');
     console.log('Teacher (Sarah Jenkins): teacher1@edusphere.edu');
     console.log('Student (Alex Rivera):   student1@edusphere.edu');
