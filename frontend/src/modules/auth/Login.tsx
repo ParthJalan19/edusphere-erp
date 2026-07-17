@@ -209,7 +209,7 @@ export default function Login() {
                 student1@edusphere.edu
               </div>
               <div className="pt-1">
-                <span className="font-semibold text-foreground">Password:</span> Password123
+                <span className="font-semibold text-foreground">Password:</span> EduSpherePass2026#
               </div>
             </div>
           </div>
