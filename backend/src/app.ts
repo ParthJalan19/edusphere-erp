@@ -22,7 +22,11 @@ const app = express();
 app.use(helmet());
 
 // 2. CORS configuration
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+let corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+if (corsOrigin.endsWith('/')) {
+  corsOrigin = corsOrigin.slice(0, -1);
+}
+
 app.use(
   cors({
     origin: corsOrigin,
