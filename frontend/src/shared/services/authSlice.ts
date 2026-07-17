@@ -101,6 +101,8 @@ const authSlice = createSlice({
       state.user = null;
       state.profile = null;
       state.checkingSession = false;
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
     },
   },
   extraReducers: (builder) => {
@@ -112,12 +114,26 @@ const authSlice = createSlice({
       })
       .addCase(
         loginUser.fulfilled,
-        (state, action: PayloadAction<{ user: User; profile: Profile }>) => {
+        (
+          state,
+          action: PayloadAction<{
+            user: User;
+            profile: Profile;
+            accessToken?: string;
+            refreshToken?: string;
+          }>
+        ) => {
           state.loading = false;
           state.isAuthenticated = true;
           state.user = action.payload.user;
           state.profile = action.payload.profile;
           state.error = null;
+          if (action.payload.accessToken) {
+            localStorage.setItem('accessToken', action.payload.accessToken);
+          }
+          if (action.payload.refreshToken) {
+            localStorage.setItem('refreshToken', action.payload.refreshToken);
+          }
         }
       )
       .addCase(loginUser.rejected, (state, action) => {
@@ -126,6 +142,8 @@ const authSlice = createSlice({
         state.user = null;
         state.profile = null;
         state.error = action.payload as string;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       })
       // Logout reducers
       .addCase(logoutUser.fulfilled, (state) => {
@@ -133,6 +151,8 @@ const authSlice = createSlice({
         state.user = null;
         state.profile = null;
         state.error = null;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       })
       // Check session reducers
       .addCase(checkAuthSession.pending, (state) => {

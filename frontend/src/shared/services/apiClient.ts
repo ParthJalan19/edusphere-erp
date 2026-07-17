@@ -8,6 +8,20 @@ const apiClient = axios.create({
   },
 });
 
+// Request Interceptor: Attach access token to headers
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 let isRefreshing = false;
 interface QueueItem {
   resolve: (value: unknown) => void;
@@ -27,6 +41,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+// Response Interceptor: Handle transparent token rotation on 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -60,13 +75,29 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await apiClient.post('/auth/refresh');
+        const localRefresh = localStorage.getItem('refreshToken');
+        const res = await apiClient.post('/auth/refresh', {
+          refreshToken: localRefresh,
+        });
+
+        const { accessToken, refreshToken } = res.data.data;
+        if (accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+        }
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+
         isRefreshing = false;
         processQueue(null, 'refreshed');
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
         processQueue(refreshError, null);
+
+        // Clear local credentials on hard session failure
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
 
         // Trigger a global custom event so the Redux auth slice can reset state
         window.dispatchEvent(new CustomEvent('auth-logout'));

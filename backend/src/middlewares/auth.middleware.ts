@@ -17,7 +17,12 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { accessToken, refreshToken } = req.cookies;
+    let accessToken = req.cookies.accessToken;
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    if (!accessToken && req.headers.authorization?.startsWith('Bearer ')) {
+      accessToken = req.headers.authorization.split(' ')[1];
+    }
 
     // Case 1: Access Token is present and valid
     if (accessToken) {

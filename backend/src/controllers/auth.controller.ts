@@ -79,6 +79,8 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       data: {
         user: userObj,
         profile,
+        accessToken,
+        refreshToken,
       },
       error: null,
     });
@@ -113,7 +115,7 @@ export const logout = async (req: Request, res: Response, next: NextFunction): P
 
 export const refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
     if (!refreshToken) {
       throw new AppError('No refresh token provided', 401);
     }
@@ -156,6 +158,8 @@ export const refresh = async (req: Request, res: Response, next: NextFunction): 
           email: user.email,
           role: user.role,
         },
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
       },
       error: null,
     });
