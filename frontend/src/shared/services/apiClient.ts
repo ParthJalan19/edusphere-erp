@@ -59,6 +59,11 @@ apiClient.interceptors.response.use(
       !originalRequest.url?.includes('/auth/forgot-password') &&
       !originalRequest.url?.includes('/auth/reset-password')
     ) {
+      const localRefresh = localStorage.getItem('refreshToken');
+      if (!localRefresh) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

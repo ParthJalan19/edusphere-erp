@@ -16,9 +16,13 @@ export const errorHandler = (
   const statusCode = err.statusCode || 500;
   const status = err.status || 'error';
 
-  // In development, we can print the stack trace for debugging
+  // In development, print full details only for server/non-operational errors
   if (process.env.NODE_ENV === 'development') {
-    console.error('Error details:', err);
+    if (!err.isOperational || statusCode >= 500) {
+      console.error('Server/Database Error details:', err);
+    } else {
+      console.warn(`[Client Operational Error] ${statusCode} (${status}): ${err.message}`);
+    }
   }
 
   // Handle Mongoose validation errors
