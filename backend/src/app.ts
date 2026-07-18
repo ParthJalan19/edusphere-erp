@@ -18,6 +18,9 @@ import searchRouter from './routes/search.routes.js';
 
 const app = express();
 
+// Trust reverse proxy (required for express-rate-limit behind services like Render)
+app.set('trust proxy', 1);
+
 // 1. Security HTTP headers
 app.use(helmet());
 
